@@ -1,5 +1,5 @@
 import os
-
+import streamlit as st
 import google.generativeai as genai
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
@@ -10,10 +10,8 @@ load_dotenv()
 import os
 
 # Get API key securely
-api_key = os.getenv("GOOGLE_API_KEY")
-
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 # Configure Gemini
-genai.configure(api_key=api_key)
 
 
 model = genai.GenerativeModel("gemini-3-flash-preview")
