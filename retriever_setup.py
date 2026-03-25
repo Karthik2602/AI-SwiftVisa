@@ -2,8 +2,7 @@
 
 import os
 from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
-
+from langchain_community.embeddings import HuggingFaceEmbeddings
 # -------------------------------------------------
 # 1️⃣ Path to FAISS Index Folder
 # -------------------------------------------------
@@ -15,9 +14,8 @@ DB_FAISS_PATH = "visa_faiss_index"
 # -------------------------------------------------
 
 embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+    model_name="all-MiniLM-L6-v2"
 )
-
 # -------------------------------------------------
 # 3️⃣ Load FAISS Index
 # -------------------------------------------------
