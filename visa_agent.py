@@ -9,10 +9,11 @@ from langchain_core.runnables import RunnablePassthrough
 from retriever_setup import retriever
 from prompts import visa_chat_prompt
 
-from dotenv import load_dotenv
 import os
+import streamlit as st
+import google.generativeai as genai
 
-load_dotenv()
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 # -------------------------------------------------
 # 1️⃣ Gemini Initialization
 # -------------------------------------------------
