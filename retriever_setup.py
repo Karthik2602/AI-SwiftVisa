@@ -5,7 +5,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
 # -------------------------------------------------
 # 1️⃣ Path to FAISS Index Folder
-# -------------------------------------------------
+# --------------------------------------------
 
 DB_FAISS_PATH = "visa_faiss_index"
 
