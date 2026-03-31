@@ -598,6 +598,24 @@ hr {
     margin: 32px 0 !important;
 }
 
+/* ─── STEP NAV BACK BUTTON ─────────────────────────── */
+/* Back buttons sit in col_nav1 — style them ghost */
+div[data-testid="column"]:first-child .stButton > button {
+    background: rgba(30, 41, 59, 0.5) !important;
+    border: 1px solid rgba(99, 102, 241, 0.2) !important;
+    color: #94a3b8 !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+}
+
+div[data-testid="column"]:first-child .stButton > button:hover {
+    background: rgba(30, 41, 59, 0.9) !important;
+    border-color: rgba(99, 102, 241, 0.45) !important;
+    color: #e2e8f0 !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
 /* ─── LABEL FONT ─────────────────────────────────── */
 .stTextInput label, .stNumberInput label, .stSelectbox label {
     font-family: 'Sora', sans-serif !important;
@@ -611,12 +629,19 @@ hr {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------
-# SESSION STATE
+# SESSION STATE  +  REFRESH PERSISTENCE
 # -------------------------------------------------
+_qp = st.query_params
+
 if "mode" not in st.session_state:
-    st.session_state.mode = None
+    st.session_state.mode = _qp.get("mode", None)
+
 if "step" not in st.session_state:
-    st.session_state.step = 1
+    try:
+        st.session_state.step = int(_qp.get("step", 1))
+    except (ValueError, TypeError):
+        st.session_state.step = 1
+
 if "personal" not in st.session_state:
     st.session_state.personal = {}
 if "travel" not in st.session_state:
@@ -625,6 +650,15 @@ if "financial" not in st.session_state:
     st.session_state.financial = {}
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+
+def _sync_params():
+    if st.session_state.mode:
+        st.query_params["mode"] = st.session_state.mode
+        st.query_params["step"] = str(st.session_state.step)
+    else:
+        st.query_params.clear()
+
+_sync_params()
 
 # -------------------------------------------------
 # HOME PAGE
@@ -686,6 +720,9 @@ if st.session_state.mode is None:
         st.write("")
         if st.button("Start Eligibility Check →", key="btn_elig"):
             st.session_state.mode = "eligibility"
+            st.session_state.step = 1
+            st.query_params["mode"] = "eligibility"
+            st.query_params["step"] = "1"
             st.rerun()
 
     with col2:
@@ -708,6 +745,9 @@ if st.session_state.mode is None:
         st.write("")
         if st.button("Open Chatbot →", key="btn_chat"):
             st.session_state.mode = "chatbot"
+            st.session_state.step = 1
+            st.query_params["mode"] = "chatbot"
+            st.query_params["step"] = "1"
             st.rerun()
 
     st.markdown('</div>', unsafe_allow_html=True)
@@ -719,6 +759,7 @@ if st.session_state.mode is None:
 if st.button("← Back to Home"):
     st.session_state.mode = None
     st.session_state.step = 1
+    st.query_params.clear()
     st.rerun()
 
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
@@ -815,15 +856,18 @@ elif st.session_state.mode == "eligibility":
             passport_validity = st.number_input("Passport Validity (months) *", 0, 120)
 
         st.write("")
-        if st.button("Continue →", key="s1"):
-            st.session_state.personal = {
-                "age": age,
-                "nationality": nationality,
-                "marital_status": marital_status,
-                "passport_validity": passport_validity
-            }
-            st.session_state.step = 2
-            st.rerun()
+        col_nav1, col_nav2, col_nav3 = st.columns([1, 3, 1])
+        with col_nav3:
+            if st.button("Continue →", key="s1"):
+                st.session_state.personal = {
+                    "age": age,
+                    "nationality": nationality,
+                    "marital_status": marital_status,
+                    "passport_validity": passport_validity
+                }
+                st.session_state.step = 2
+                st.query_params["step"] = "2"
+                st.rerun()
 
     # STEP 2
     elif st.session_state.step == 2:
@@ -839,16 +883,24 @@ elif st.session_state.mode == "eligibility":
         previous_travel = st.selectbox("Previous International Travel", ["Yes", "No"])
 
         st.write("")
-        if st.button("Continue →", key="s2"):
-            st.session_state.travel = {
-                "country": destination_country,
-                "visa_type": visa_type,
-                "purpose": purpose,
-                "travel_duration": travel_duration,
-                "travel_history": previous_travel
-            }
-            st.session_state.step = 3
-            st.rerun()
+        col_nav1, col_nav2, col_nav3 = st.columns([1, 3, 1])
+        with col_nav1:
+            if st.button("← Back", key="back2"):
+                st.session_state.step = 1
+                st.query_params["step"] = "1"
+                st.rerun()
+        with col_nav3:
+            if st.button("Continue →", key="s2"):
+                st.session_state.travel = {
+                    "country": destination_country,
+                    "visa_type": visa_type,
+                    "purpose": purpose,
+                    "travel_duration": travel_duration,
+                    "travel_history": previous_travel
+                }
+                st.session_state.step = 3
+                st.query_params["step"] = "3"
+                st.rerun()
 
     # STEP 3
     elif st.session_state.step == 3:
@@ -864,16 +916,24 @@ elif st.session_state.mode == "eligibility":
         financial_proof = st.selectbox("Financial Proof Available *", ["Yes", "No"])
 
         st.write("")
-        if st.button("Continue →", key="s3"):
-            st.session_state.financial = {
-                "education": education,
-                "employment": employment,
-                "income": income,
-                "bank_balance": bank_balance,
-                "financial_proof": financial_proof
-            }
-            st.session_state.step = 4
-            st.rerun()
+        col_nav1, col_nav2, col_nav3 = st.columns([1, 3, 1])
+        with col_nav1:
+            if st.button("← Back", key="back3"):
+                st.session_state.step = 2
+                st.query_params["step"] = "2"
+                st.rerun()
+        with col_nav3:
+            if st.button("Continue →", key="s3"):
+                st.session_state.financial = {
+                    "education": education,
+                    "employment": employment,
+                    "income": income,
+                    "bank_balance": bank_balance,
+                    "financial_proof": financial_proof
+                }
+                st.session_state.step = 4
+                st.query_params["step"] = "4"
+                st.rerun()
 
     # STEP 4
     elif st.session_state.step == 4:
@@ -893,9 +953,17 @@ In terms of background, the applicant has {data['travel_history']} previous inte
         st.markdown('<div class="result-card"><div class="result-title">Application Summary</div></div>', unsafe_allow_html=True)
         st.markdown(f'<p style="color:#94a3b8;font-size:14px;line-height:1.8;">{summary.strip()}</p>', unsafe_allow_html=True)
         st.write("")
-        if st.button("Submit for AI Analysis →", key="s4"):
-            st.session_state.step = 5
-            st.rerun()
+        col_nav1, col_nav2, col_nav3 = st.columns([1, 3, 1])
+        with col_nav1:
+            if st.button("← Back", key="back4"):
+                st.session_state.step = 3
+                st.query_params["step"] = "3"
+                st.rerun()
+        with col_nav3:
+            if st.button("Submit →", key="s4"):
+                st.session_state.step = 5
+                st.query_params["step"] = "5"
+                st.rerun()
 
     # STEP 5
     elif st.session_state.step == 5:
