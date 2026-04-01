@@ -629,10 +629,24 @@ div[data-testid="column"]:first-child .stButton > button:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------
-# SESSION STATE  +  REFRESH PERSISTENCE
+# SESSION STATE  +  FULL REFRESH PERSISTENCE
 # -------------------------------------------------
+import base64 as _b64
+
+def _encode(d: dict) -> str:
+    """Serialize dict → compact base64 string safe for URL query params."""
+    return _b64.urlsafe_b64encode(json.dumps(d, separators=(',', ':')).encode()).decode()
+
+def _decode(s: str) -> dict:
+    """Deserialize base64 string → dict. Returns {} on any error."""
+    try:
+        return json.loads(_b64.urlsafe_b64decode(s.encode()).decode())
+    except Exception:
+        return {}
+
 _qp = st.query_params
 
+# ── Restore mode & step ──
 if "mode" not in st.session_state:
     st.session_state.mode = _qp.get("mode", None)
 
@@ -642,19 +656,30 @@ if "step" not in st.session_state:
     except (ValueError, TypeError):
         st.session_state.step = 1
 
+# ── Restore form data from encoded query params ──
 if "personal" not in st.session_state:
-    st.session_state.personal = {}
+    st.session_state.personal = _decode(_qp.get("pd", ""))
+
 if "travel" not in st.session_state:
-    st.session_state.travel = {}
+    st.session_state.travel = _decode(_qp.get("td", ""))
+
 if "financial" not in st.session_state:
-    st.session_state.financial = {}
+    st.session_state.financial = _decode(_qp.get("fd", ""))
+
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 def _sync_params():
+    """Write all current state back to URL query params after every interaction."""
     if st.session_state.mode:
         st.query_params["mode"] = st.session_state.mode
         st.query_params["step"] = str(st.session_state.step)
+        if st.session_state.personal:
+            st.query_params["pd"] = _encode(st.session_state.personal)
+        if st.session_state.travel:
+            st.query_params["td"] = _encode(st.session_state.travel)
+        if st.session_state.financial:
+            st.query_params["fd"] = _encode(st.session_state.financial)
     else:
         st.query_params.clear()
 
@@ -870,7 +895,7 @@ elif st.session_state.mode == "eligibility":
                     "passport_validity": passport_validity
                 }
                 st.session_state.step = 2
-                st.query_params["step"] = "2"
+                _sync_params()
                 st.rerun()
 
     # STEP 2
@@ -900,7 +925,7 @@ elif st.session_state.mode == "eligibility":
         with col_nav1:
             if st.button("← Back", key="back2"):
                 st.session_state.step = 1
-                st.query_params["step"] = "1"
+                _sync_params()
                 st.rerun()
         with col_nav3:
             if st.button("Continue →", key="s2"):
@@ -912,7 +937,7 @@ elif st.session_state.mode == "eligibility":
                     "travel_history": previous_travel
                 }
                 st.session_state.step = 3
-                st.query_params["step"] = "3"
+                _sync_params()
                 st.rerun()
 
     # STEP 3
@@ -942,7 +967,7 @@ elif st.session_state.mode == "eligibility":
         with col_nav1:
             if st.button("← Back", key="back3"):
                 st.session_state.step = 2
-                st.query_params["step"] = "2"
+                _sync_params()
                 st.rerun()
         with col_nav3:
             if st.button("Continue →", key="s3"):
@@ -954,7 +979,7 @@ elif st.session_state.mode == "eligibility":
                     "financial_proof": financial_proof
                 }
                 st.session_state.step = 4
-                st.query_params["step"] = "4"
+                _sync_params()
                 st.rerun()
 
     # STEP 4
@@ -979,12 +1004,12 @@ In terms of background, the applicant has {data['travel_history']} previous inte
         with col_nav1:
             if st.button("← Back", key="back4"):
                 st.session_state.step = 3
-                st.query_params["step"] = "3"
+                _sync_params()
                 st.rerun()
         with col_nav3:
             if st.button("Submit →", key="s4"):
                 st.session_state.step = 5
-                st.query_params["step"] = "5"
+                _sync_params()
                 st.rerun()
 
     # STEP 5
