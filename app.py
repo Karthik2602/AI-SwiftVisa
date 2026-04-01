@@ -847,13 +847,17 @@ elif st.session_state.mode == "eligibility":
     # STEP 1
     if st.session_state.step == 1:
         st.markdown('<p style="font-size:12px;color:#475569;margin-bottom:16px;">Fields marked <span style="color:#f87171;">*</span> are required.</p>', unsafe_allow_html=True)
+        _p = st.session_state.personal
         col_a, col_b = st.columns(2, gap="large")
         with col_a:
-            age = st.number_input("Age *", 18, 80)
-            nationality = st.text_input("Nationality *")
+            age = st.number_input("Age *", 18, 80, value=int(_p.get("age", 18)))
+            nationality = st.text_input("Nationality *", value=_p.get("nationality", ""))
         with col_b:
-            marital_status = st.selectbox("Marital Status *", ["Single", "Married", "Divorced"])
-            passport_validity = st.number_input("Passport Validity (months) *", 0, 120)
+            _ms_opts = ["Single", "Married", "Divorced"]
+            marital_status = st.selectbox("Marital Status *", _ms_opts,
+                index=_ms_opts.index(_p.get("marital_status", "Single")))
+            passport_validity = st.number_input("Passport Validity (months) *", 0, 120,
+                value=int(_p.get("passport_validity", 0)))
 
         st.write("")
         col_nav1, col_nav2, col_nav3 = st.columns([1, 3, 1])
@@ -872,15 +876,24 @@ elif st.session_state.mode == "eligibility":
     # STEP 2
     elif st.session_state.step == 2:
         st.markdown('<p style="font-size:12px;color:#475569;margin-bottom:16px;">Fields marked <span style="color:#f87171;">*</span> are required.</p>', unsafe_allow_html=True)
+        _t = st.session_state.travel
         col_a, col_b = st.columns(2, gap="large")
         with col_a:
-            destination_country = st.selectbox("Destination Country *", countries)
-            visa_type = st.selectbox("Visa Type *", visa_data[destination_country])
+            _saved_country = _t.get("country", countries[0])
+            _country_idx = countries.index(_saved_country) if _saved_country in countries else 0
+            destination_country = st.selectbox("Destination Country *", countries, index=_country_idx)
+            _vt_opts = visa_data[destination_country]
+            _saved_vt = _t.get("visa_type", _vt_opts[0])
+            _vt_idx = _vt_opts.index(_saved_vt) if _saved_vt in _vt_opts else 0
+            visa_type = st.selectbox("Visa Type *", _vt_opts, index=_vt_idx)
         with col_b:
-            purpose = st.text_input("Purpose of Visit *")
-            travel_duration = st.number_input("Travel Duration (months) *", 1, 60)
+            purpose = st.text_input("Purpose of Visit *", value=_t.get("purpose", ""))
+            travel_duration = st.number_input("Travel Duration (months) *", 1, 60,
+                value=int(_t.get("travel_duration", 1)))
 
-        previous_travel = st.selectbox("Previous International Travel", ["Yes", "No"])
+        _pt_opts = ["Yes", "No"]
+        previous_travel = st.selectbox("Previous International Travel", _pt_opts,
+            index=_pt_opts.index(_t.get("travel_history", "No")))
 
         st.write("")
         col_nav1, col_nav2, col_nav3 = st.columns([1, 3, 1])
@@ -905,15 +918,24 @@ elif st.session_state.mode == "eligibility":
     # STEP 3
     elif st.session_state.step == 3:
         st.markdown('<p style="font-size:12px;color:#475569;margin-bottom:16px;">Fields marked <span style="color:#f87171;">*</span> are required.</p>', unsafe_allow_html=True)
+        _f = st.session_state.financial
         col_a, col_b = st.columns(2, gap="large")
         with col_a:
-            education = st.selectbox("Education Level *", ["High School", "Bachelor's", "Master's", "PhD"])
-            employment = st.selectbox("Employment Status *", ["Student", "Employed", "Self-employed", "Unemployed"])
+            _edu_opts = ["High School", "Bachelor's", "Master's", "PhD"]
+            education = st.selectbox("Education Level *", _edu_opts,
+                index=_edu_opts.index(_f.get("education", "High School")))
+            _emp_opts = ["Student", "Employed", "Self-employed", "Unemployed"]
+            employment = st.selectbox("Employment Status *", _emp_opts,
+                index=_emp_opts.index(_f.get("employment", "Student")))
         with col_b:
-            income = st.number_input("Annual Income (USD) *", min_value=0)
-            bank_balance = st.number_input("Bank Balance (USD) *", min_value=0)
+            income = st.number_input("Annual Income (USD) *", min_value=0,
+                value=int(_f.get("income", 0)))
+            bank_balance = st.number_input("Bank Balance (USD) *", min_value=0,
+                value=int(_f.get("bank_balance", 0)))
 
-        financial_proof = st.selectbox("Financial Proof Available *", ["Yes", "No"])
+        _fp_opts = ["Yes", "No"]
+        financial_proof = st.selectbox("Financial Proof Available *", _fp_opts,
+            index=_fp_opts.index(_f.get("financial_proof", "No")))
 
         st.write("")
         col_nav1, col_nav2, col_nav3 = st.columns([1, 3, 1])
